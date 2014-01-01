@@ -43,11 +43,11 @@ class Page
     if content
       self.content = content
       self.document = Nokogiri::HTML(content)
-      self.container = Hash[
-        self.document.css("body a")\
-        .reject{|ele| ele['href'].nil? || ele['href'].downcase.start_with?('javascript:')}\
-        .each{|ele| [Request.full_url(ele["href"], url), ele.content]}
-      ]
+      # self.container = Hash[
+      #   self.document.css("body a")\
+      #   .reject{|ele| ele['href'].nil? || ele['href'].downcase.start_with?('javascript:')}\
+      #   .each{|ele| [Request.full_url(ele["href"], url), ele.content]}
+      # ]
       self.title = self.document.title
       self.save!
     end

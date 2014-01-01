@@ -6,7 +6,7 @@ class Model
 
   @@field_config, @@index_config = {}, {}
 
-  belongs_to :page
+  # belongs_to :page
 
   class << self
     %w{one many}.each do |name|
@@ -65,7 +65,7 @@ class Model
         self[key] = val
       end
     end
-    self["page"] = page
+    # self["page"] = page
   end
 
   def index?
