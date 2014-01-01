@@ -1,0 +1,5 @@
+cc98:
+  indexes:
+    - ['http://www.cc98.org?q=*', 1..2]
+  fields:
+    -

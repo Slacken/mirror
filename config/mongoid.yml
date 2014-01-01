@@ -1,0 +1,8 @@
+default:
+  sessions:
+    default:
+      database: mirror_develepment
+      hosts:
+        - localhost:27017
+      options:
+        pool_size: 20 # important to raise performance

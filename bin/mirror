@@ -1,0 +1,46 @@
+#!/usr/local/bin/ruby
+require 'getoptlong'
+require 'irb'
+require File.expand_path('../../config/application',  __FILE__)
+
+opts = GetoptLong.new(
+  ['--help', '-h', GetoptLong::NO_ARGUMENT],
+  ['--repeat', '-n', GetoptLong::REQUIRED_ARGUMENT],
+  ['--console','-c', GetoptLong::NO_ARGUMENT],
+  ['--run','-r', GetoptLong::REQUIRED_ARGUMENT]
+  # [ '--name', GetoptLong::OPTIONAL_ARGUMENT ]
+)
+
+opts.each do |opt, arg| # the first opt
+  case opt
+  when '--repeat'
+    
+  when '--console'
+    IRB.start
+  when '--run'
+    controller = Mirror.root + "/controllers/#{arg}_controller.rb"
+    if File.exists?(controller)
+      require controller
+      action = ARGV[0] || 'action_missing'
+      klass = arg.capitalize + "Controller"
+      raise "#{klass} not defined in #{controller}" unless Object.const_defined?(klass)
+      cntl = Object.const_get(klass).new
+      action = 'action_missing' unless cntl.respond_to? action
+      cntl.send(action)
+    else
+      raise "No such controller:#{controller}"
+    end
+  when '--help'
+    puts <<-EOF
+mirror [option] args..
+-r controller method
+  excute controller action
+-c, --console
+  load irb console
+-h, --help
+  show help messages
+    EOF
+  else
+    puts "Unkonwn options"
+  end
+end
