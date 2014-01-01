@@ -9,7 +9,6 @@ class Site
 
   has_many :assets
   has_many :pages
-  has_many :indexes
 
   def self.default(url)
     find_or_create_by(host: URI(url).host)

@@ -6,7 +6,7 @@ class Model
 
   @@field_config, @@index_config = {}, {}
 
-  # belongs_to :page
+  belongs_to :page
 
   class << self
     %w{one many}.each do |name|
@@ -54,16 +54,18 @@ class Model
   def page=(page)
     config = @@field_config[self.class.name]
     document = page.document
-    config.each_pair do |key, value|
-      block = value[:block] || ->(node){ node.content.strip }
-      if value[:array] # Nokogiri::XML::NodeSet
-        val = document.css(value[:pattern]).map{|node| block.call(node)}# Node: http://nokogiri.org/Nokogiri/XML/Node.html
-      else # Nokogiri::XML::Node
-        val = block.call(document.css(value[:pattern]).first)
+    if document
+      config.each_pair do |key, value|
+        block = value[:block] || ->(node){ node.content.strip }
+        if value[:array] # Nokogiri::XML::NodeSet
+          val = document.css(value[:pattern]).map{|node| block.call(node)}# Node: http://nokogiri.org/Nokogiri/XML/Node.html
+        else # Nokogiri::XML::Node
+          val = block.call(document.css(value[:pattern]).first)
+        end
+        self[key] = val
       end
-      self[key] = val
     end
-    # self["page"] = page
+    self["page"] = page
   end
 
   def index?
