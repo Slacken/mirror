@@ -21,7 +21,8 @@ class Cc98Controller < Controller
     bi.fetch(url)
     raise "cannot fetch #{url}" unless bi.save!
     puts "Got #{bi.boards.count} boards"
-    boards = bi.boards
+    
+    boards = Cc98::BoardIndex.last.boards
     parents = boards.map{|b| b["parent"] }.uniq
     boards.reject{|b| parents.include?(b["id"])}.each do |b|
       bs = Cc98::BoardShow.new(bid: b["id"], p: 1)
