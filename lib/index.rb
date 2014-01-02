@@ -8,14 +8,14 @@ class Index < Struct.new(:pattern, :args)
 
   @@cocurrence = 20
 
-  def self.process(urls, &block)
+  def self.process(urls, header = {}, &block)
     raise NoBlockError, "No block given" unless block
     urls.each_slice(@@cocurrence) do |group|
       threads = []
       group.each do |url|
         threads << Thread.new(url) do |uri|
           begin
-            page = Page.fetch(uri)
+            page = Page.fetch(uri, header)
             block.call(page)
           rescue StandardError => e
             Mirror.logger.error(e.message + "(#{uri})")
@@ -27,8 +27,8 @@ class Index < Struct.new(:pattern, :args)
     end
   end
 
-  def process(&block)
-    Index.process(urls, &block)
+  def process(header = {}, &block)
+    Index.process(urls, header, &block)
   end
 
   def urls

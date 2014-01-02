@@ -3,7 +3,7 @@ class Page
   include Mongoid::Timestamps::Created # timestamp
 
   field :url
-  field :container, type: Hash, default: {} # url(included in content) => text
+  # field :container, type: Hash, default: {} # url(included in content) => text
   field :title
   field :content # html
 
@@ -24,13 +24,13 @@ class Page
     _document || (self.document = Nokogiri::HTML(content) if content)
   end
 
-  def self.fetch(url, site = nil, options = {assets: false})
+  def self.fetch(url, header = {}, site = nil, options = {assets: false})
     url = Request.clean_url(url)
     page = Page.where(url: url).first
     unless page
       site ||= Site.default(url)
       page = Page.new(url: url, site: site)
-      page.fetch_html!
+      page.fetch_html!(header)
       if options[:assets]
         page.fetch_assets
       end
@@ -38,8 +38,8 @@ class Page
     page
   end
 
-  def fetch_html!
-    content = Request.get(url)
+  def fetch_html!(header = {})
+    content = Request.get(url, {}, header)
     if content
       self.content = content
       self.document = Nokogiri::HTML(content)

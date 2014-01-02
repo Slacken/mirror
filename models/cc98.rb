@@ -1,10 +1,46 @@
 #encoding: utf-8
 module Cc98
-  class Post < Model
-    css_one content: "table.tablebody2"
+  class BoardIndex < Model
+    # index_page 'http://www.cc98.org/customboard.asp' => []
+    set_cookie aspsky: 'username=%E5%BF%83%E7%81%AB&usercookies=3&userid=480094&useranony=&userhidden=2&password=965eb72c92a549dd'
+    css_many boards: "table.tableBorder1 a" do |node|
+      board = { id: node["href"][/[\d]{1,5}/].to_i, name: node.text }
+      ancestor = node.ancestors("div[id^=folder], div[id^=child]").first
+      if ancestor
+        board[:parent] = ancestor["id"][/[\d]{1,5}/].to_i
+        board[:parent] = 0 if board[:parent] == board[:id]
+      end
+      board
+    end
+  end
+
+  class BoardShow < Model
+    field :p, type: Integer, default: 1
+    field :bid, type: Integer
+    set_cookie aspsky: 'username=%E5%BF%83%E7%81%AB&usercookies=3&userid=480094&useranony=&userhidden=2&password=965eb72c92a549dd'
+    css_one(max: "body>form:last td:first b:nth(2)"){|node| node.content.to_i }
+    css_many(urls: '.tableborder1 tr > td:nth(2) > a'){|node| node["href"] }
+
+    def valid?
+      p <= max
+    end
+  end
+
+  class PostShow < Model # http://www.cc98.org/dispbbs.asp?boardID=459&ID=4311917
+    set_cookie aspsky: 'username=%E5%BF%83%E7%81%AB&usercookies=3&userid=480094&useranony=&userhidden=2&password=965eb72c92a549dd'
+    css_one(content: "#ubbcode1"){|node| node.inner_html }
+    css_one title: ".tablebody2 td > b"
+    css_one reader: "td[width='70%'] > b"
+    css_one reply: "#topicPagesNavigation > b"
+    css_one(id: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=[\d]{1,5}&id=([\d]{1,10})/)[1]}
+    css_one(board: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=([\d]{1,5})&id=[\d]{1,10}/)[1]}
+    css_one(user_id: "td.tablebody1[width='175'] a"){|node| m = node["href"].match(/userid=([\d]{1,10})/); m ? m[1] : nil }
+    css_one(gender: "img[src$='Male.gif']"){|node| node["src"][/(FeMale|Male)/].downcase }
+    css_one pubtime: "td.tablebody1[width='175']"
   end
 
   class UserIndex < Model
+    index_page 'http://www.cc98.org/toplist.asp?page=*&orders=7' => [1..6344]
     css_many(users: 'table.tableborder1 tr[style]') do |node|
       tds = node.css("td")
       {

@@ -3,10 +3,18 @@ require 'open-uri'
 class Model
   include Mongoid::Document
   include Mongoid::Attributes::Dynamic
+  
+  @@config = {}
 
-  @@field_config, @@index_config = {}, {}
+  belongs_to :page
 
-  # belongs_to :page
+  %w{field index header}.each do |name|
+    define_singleton_method "#{name}_config=", ->(value){ 
+      @@config[self.name].nil? ? (@@config[self.name] = {name => value}; value): (@@config[self.name][name] = value)
+    }
+    define_singleton_method "#{name}_config", ->{ @@config[self.name].nil? ? nil : @@config[self.name][name] }
+    define_method "#{name}_config", ->{ self.class.send("#{name}_config") }
+  end
 
   class << self
     %w{one many}.each do |name|
@@ -14,15 +22,25 @@ class Model
       define_method "css_#{name}" do |hashes, &block| # cannot use yield or block_given? in define_method's block-closure
         hashes.each_pair do |key, value|
           # field key, type: (name=='one' ? String : Array)
-          @@field_config[self.name] ||= {}
-          @@field_config[self.name][key] = {pattern: value, block: block, array: (name == 'many')}
+          self.field_config ||= {}
+          self.field_config[key] = {pattern: value, block: block, array: (name == 'many')}
         end
       end
     end
     
     # the document of model is index page
-    def index_page(pattern, args = [])
-      @@index_config[self.name] = [pattern, args]
+    def index_page(pair)
+      raise "Invalid arguments for index_page" unless pair.size == 1
+      self.index_config = pair.first
+    end
+
+    def set_cookie(cookie)
+      cookie = cookie.instance_of?(Hash) ? cookie.map{|k,v| "#{k}=#{v}"}.join("; ") : cookie.to_s
+      if self.header_config
+        self.header_config["Cookie"] = cookie
+      else
+        self.header_config = {"Cookie" => cookie}
+      end
     end
 
     # rewrite collection name
@@ -47,16 +65,25 @@ class Model
   end
 
   def fetch(url)
-    page = Page.fetch(url)
-    self.page = page if page
+    page = Page.fetch(url, header_config || {})
+    if page
+      self.page = page
+    else
+      raise "cannot fetch page(#{url})"
+    end
   end
 
   def page=(page)
-    config = @@field_config[self.class.name]
     document = page.document
     if document
-      config.each_pair do |key, value|
-        block = value[:block] || ->(node){ node.content.strip }
+      field_config.each_pair do |key, value|
+        block = ->(node) do 
+          if node
+            (value[:block] || ->(n){ n.content.strip }).call(node)
+          else
+            nil # for un-matches
+          end
+        end
         if value[:array] # Nokogiri::XML::NodeSet
           val = document.css(value[:pattern]).map{|node| block.call(node)}# Node: http://nokogiri.org/Nokogiri/XML/Node.html
         else # Nokogiri::XML::Node
@@ -64,16 +91,19 @@ class Model
         end
         self[key] = val
       end
+      self["page_id"] = page.id
+    else
+      raise "page no document"
     end
-    # self["page"] = page
+    page
   end
 
   def index?
-    @@index_config[self.class.name].present?
+    index_config.present?
   end
 
   def index
-    index? ? Index.new(*@@index_config[self.class.name]) : nil
+    index? ? Index.new(*index_config) : nil
   end
 
   def export
