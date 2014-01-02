@@ -14,7 +14,7 @@ class Cc98Controller < Controller
   end
 
   def show
-    urls = Cc98::UserIndex.distinct("users.id").map{|id| "http://www.cc98.org/dispuser.asp?id=#{id}"}
+    urls = (Cc98::UserIndex.distinct("users.id") - Cc98::UserShow.distinct("user.id")).map{|id| "http://www.cc98.org/dispuser.asp?id=#{id}"}
     Index.process(urls) do |page|
       if page
         us = Cc98::UserShow.new
