@@ -34,7 +34,7 @@ class Cc98Controller < Controller
       else
         bs.save!
         index = Index.new("http://www.cc98.org/list.asp?boardid=#{b["id"]}&page=*", [2..(bs.max)])
-        index.process(bd.header_config) do |page|
+        index.process(bs.header_config) do |page|
           args = Hash[URI(page.url).query.split("&").map{|s| s.split("=")}]
           bss = Cc98::BoardShow.new(bid: args["boardid"], p: args["page"])
           bss.page = page
