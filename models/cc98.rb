@@ -21,7 +21,7 @@ module Cc98
     css_one(max: "body>form:last td:first b:nth(2)"){|node| node.content.to_i }
     css_many(urls: '.tableborder1 tr > td:nth(2) > a'){|node| node["href"] }
 
-    def valid?
+    def page_valid?
       p <= max
     end
   end

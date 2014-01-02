@@ -28,7 +28,7 @@ class Cc98Controller < Controller
       bs = Cc98::BoardShow.new(bid: b["id"], p: 1)
       begin
         bs.fetch("http://www.cc98.org/list.asp?boardid=#{b["id"]}&page=1")
-        raise "Not valid board" unless bs.valid?
+        raise "Not valid board" unless bs.page_valid?
       rescue StandardError => e
         puts e.message + "(http://www.cc98.org/list.asp?boardid=#{b["id"]}&page=1)"
       else
