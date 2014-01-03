@@ -22,7 +22,7 @@ class Cc98Controller < Controller
     raise "cannot fetch #{url}" unless bi.save!
     puts "Got #{bi.boards.count} boards"
     
-    boards = Cc98::BoardIndex.last.boards
+    boards = Cc98::BoardIndex.only.boards
     parents = boards.map{|b| b["parent"] }.uniq
     boards.reject{|b| parents.include?(b["id"])}.each do |b|
       bs = Cc98::BoardShow.new(bid: b["id"], p: 1)
@@ -45,7 +45,18 @@ class Cc98Controller < Controller
   end
 
   def postindex
-    
+    bids = Cc98::BoardShow.distinct(:bid)
+    bi = Cc98::BoardIndex.only
+    bi.boards = bi.boards.map{|b| b["open"] = (bids.include?(b["id"])); b }
+    bi.save!
+    bids.each do |id|
+      urls = Cc98::BoardShow.where(bid: id).distinct(:urls).map{|u| "http://www.cc98.org/#{u}"}
+      Index.process(urls, Cc98::BoardShow.header_config) do |page|
+        ps = Cc98::PostShow.new
+        ps.page = page
+        ps.save! ? (print '.') : (print '-')
+      end
+    end
   end
 
   # fetch post

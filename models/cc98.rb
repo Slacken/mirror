@@ -12,6 +12,10 @@ module Cc98
       end
       board
     end
+
+    def self.only
+      self.last || (raise "No Board Index")
+    end
   end
 
   class BoardShow < Model
