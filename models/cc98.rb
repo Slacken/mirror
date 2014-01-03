@@ -36,7 +36,7 @@ module Cc98
     css_one title: ".tablebody2 td > b"
     css_one reader: "td[width='70%'] > b"
     css_one reply: "#topicPagesNavigation > b"
-    css_one(id: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=[\d]{1,5}&id=([\d]{1,10})/)[1]}
+    css_one(pid: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=[\d]{1,5}&id=([\d]{1,10})/)[1]}
     css_one(board: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=([\d]{1,5})&id=[\d]{1,10}/)[1]}
     css_one(user_id: "td.tablebody1[width='175'] a"){|node| m = node["href"].match(/userid=([\d]{1,10})/); m ? m[1] : nil }
     css_one(gender: "img[src$='Male.gif']"){|node| node["src"][/(FeMale|Male)/].downcase }
