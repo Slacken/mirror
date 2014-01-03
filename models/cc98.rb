@@ -34,10 +34,10 @@ module Cc98
     set_cookie aspsky: 'username=%E5%BF%83%E7%81%AB&usercookies=3&userid=480094&useranony=&userhidden=2&password=965eb72c92a549dd'
     css_one(content: "#ubbcode1"){|node| node.inner_html }
     css_one title: ".tablebody2 td > b"
-    css_one reader: "td[width='70%'] > b"
-    css_one reply: "#topicPagesNavigation > b"
-    css_one(pid: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=[\d]{1,5}&id=([\d]{1,10})/)[1]}
-    css_one(board: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=([\d]{1,5})&id=[\d]{1,10}/)[1]}
+    css_one(reader: "td[width='70%'] > b"){|node| node.content.strip.to_i}
+    css_one(reply: "#topicPagesNavigation > b"){|node| node.content.strip.to_i}
+    css_one(pid: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=[\d]{1,5}&id=([\d]{1,10})/)[1].to_i}
+    css_one(board: "a[href^='reannounce.asp']"){|node| node["href"].match(/reannounce.asp\?BoardID=([\d]{1,5})&id=[\d]{1,10}/)[1].to_i}
     css_one(user_id: "td.tablebody1[width='175'] a"){|node| m = node["href"].match(/userid=([\d]{1,10})/); m ? m[1] : nil }
     css_one(gender: "img[src$='Male.gif']"){|node| node["src"][/(FeMale|Male)/].downcase }
     css_one pubtime: "td.tablebody1[width='175']"
