@@ -6,9 +6,9 @@ class Model
   
   @@config = {}
 
-  belongs_to :page
+  belongs_to :page, dependent: :delete
 
-  %w{field index header}.each do |name|
+  %w{field index header url}.each do |name|
     define_singleton_method "#{name}_config=", ->(value){ 
       @@config[self.name].nil? ? (@@config[self.name] = {name => value}; value): (@@config[self.name][name] = value)
     }
@@ -34,6 +34,10 @@ class Model
       self.index_config = pair.first
     end
 
+    def one_page(url)
+      self.url_config = url
+    end
+
     def set_cookie(cookie)
       cookie = cookie.instance_of?(Hash) ? cookie.map{|k,v| "#{k}=#{v}"}.join("; ") : cookie.to_s
       if self.header_config
@@ -47,9 +51,32 @@ class Model
     def collection_name
       "documents"
     end
+
+    def index?
+      index_config.present?
+    end
+
+    def index
+      index? ? Index.new(*index_config) : nil
+    end
+
+    def fetch_all!
+      index.process do |page|
+        m = self.new
+        m.page = page
+        m.save!
+      end
+    end
+
+    # one page model
+    def fetch!
+      m = self.new
+      m.fetch(url_config)
+      m.save!
+    end
   end
 
-  # inner_one/inner_many : help to proccess node in block of css_one&css_many
+  # inner_one/inner_many : help to process node in block of css_one&css_many
   class Nokogiri::XML::Node
     %w{one many}.each do |name|
       define_method "inner_#{name}" do |css, &block| 
@@ -96,14 +123,6 @@ class Model
       raise "page no document"
     end
     page
-  end
-
-  def index?
-    index_config.present?
-  end
-
-  def index
-    index? ? Index.new(*index_config) : nil
   end
 
   def export
