@@ -51,7 +51,7 @@ class Request
     end
 
     def clean_url(url)
-      url.split('#').first
+      URI.encode(url.split('#').first)
     end
 
     def interval(seconds)

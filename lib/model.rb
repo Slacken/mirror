@@ -23,7 +23,16 @@ class Model
         hashes.each_pair do |key, value|
           # field key, type: (name=='one' ? String : Array)
           self.field_config ||= {}
-          self.field_config[key] = {pattern: value, block: block, array: (name == 'many')}
+          self.field_config[key] = {pattern: value, block: block, mode: name}
+        end
+      end
+    end
+
+    0.upto(4) do |i|
+      define_method "match#{i}" do |hashes, &block|
+        hashes.each_pair do |key, value|
+          self.field_config ||= {}
+          self.field_config[key] = {pattern: value, block: block, mode: i}
         end
       end
     end
@@ -104,17 +113,28 @@ class Model
     document = page.document
     if document
       field_config.each_pair do |key, value|
-        block = ->(node) do 
-          if node
-            (value[:block] || ->(n){ n.content.strip }).call(node)
-          else
-            nil # for un-matches
+        # regular expression
+        if value[:mode].is_a? Integer
+          matches = page.content.match(value[:pattern])
+          puts value[:pattern]
+          match = matches.nil? ? nil : matches[value[:mode]]
+          val = value[:block].nil? ? match : value[:block].call(match)
+        # css one or many
+        elsif %w{one many}.include?(value[:mode])
+          block = ->(node) do 
+            if node
+              (value[:block] || ->(n){ n.content.strip }).call(node)
+            else
+              nil # for un-matches
+            end
           end
-        end
-        if value[:array] # Nokogiri::XML::NodeSet
-          val = document.css(value[:pattern]).map{|node| block.call(node)}# Node: http://nokogiri.org/Nokogiri/XML/Node.html
-        else # Nokogiri::XML::Node
-          val = block.call(document.css(value[:pattern]).first)
+          if value[:mode] == 'many' # Nokogiri::XML::NodeSet
+            val = document.css(value[:pattern]).map{|node| block.call(node)}# Node: http://nokogiri.org/Nokogiri/XML/Node.html
+          else value[:mode] == 'one' # Nokogiri::XML::Node
+            val = block.call(document.css(value[:pattern]).first)
+          end
+        else
+          raise "Error mode"
         end
         self[key] = val
       end
