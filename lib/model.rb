@@ -116,7 +116,6 @@ class Model
         # regular expression
         if value[:mode].is_a? Integer
           matches = page.content.match(value[:pattern])
-          puts value[:pattern]
           match = matches.nil? ? nil : matches[value[:mode]]
           val = value[:block].nil? ? match : value[:block].call(match)
         # css one or many
@@ -145,7 +144,10 @@ class Model
     page
   end
 
-  def export
+  def self.export
+    path = Mirror.root + "/assets/data/#{to_s.tableize.gsub('/', '-')}.json"
+    File.write(path, all.to_json(except: [:_id, :page_id]))
+    path
   end
 end
 
